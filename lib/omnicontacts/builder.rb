@@ -3,17 +3,17 @@ require "omnicontacts"
 module OmniContacts
   class Builder < Rack::Builder
     def initialize(app, &block)
-      if rack14?
-        super
-      else
+      if rack13?
         @app = app
         super(&block)
+      else
+        super
       end
     end
 
-    def rack14?
-      v = Rack.release.split('.')
-      v[0].to_i >= 1 || v[1].to_i >= 4
+    def rack13?
+      major, minor = Rack.release.split('.').first(2)
+      major.to_i == 1 && minor.to_i <= 3
     end
 
     def importer importer, *args
@@ -24,7 +24,7 @@ module OmniContacts
     end
 
     def call env
-      @ins << @app unless rack14? || @ins.include?(@app)
+      @ins << @app if rack13? && !@ins.include?(@app)
       to_app.call(env)
     end
   end
